@@ -171,8 +171,8 @@ void ValidatorManagerImpl::wait_block_state(BlockHandle handle, td::uint32 prior
     auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), handle](td::Result<td::Ref<ShardState>> R) {
       td::actor::send_closure(SelfId, &ValidatorManagerImpl::finished_wait_state, handle->id(), std::move(R));
     });
-    auto id = td::actor::create_actor<WaitBlockState>("waitstate", handle, 0, actor_id(this), td::Timestamp::in(10.0),
-                                                      std::move(P))
+    auto id = td::actor::create_actor<WaitBlockState>("waitstate", handle, 0, opts_, last_masterchain_state_,
+                                                      actor_id(this), td::Timestamp::in(10.0), std::move(P))
                   .release();
     wait_state_[handle->id()].actor_ = id;
     it = wait_state_.find(handle->id());
@@ -413,6 +413,11 @@ void ValidatorManagerImpl::get_block_candidate_from_db(PublicKey source, BlockId
                                                        FileHash collated_data_file_hash,
                                                        td::Promise<BlockCandidate> promise) {
   td::actor::send_closure(db_, &Db::get_block_candidate, source, id, collated_data_file_hash, std::move(promise));
+}
+
+void ValidatorManagerImpl::get_candidate_data_by_block_id_from_db(BlockIdExt id, td::Promise<td::BufferSlice> promise) {
+  td::actor::send_closure(db_, &Db::get_block_candidate_by_block_id, id,
+                          promise.wrap([](BlockCandidate &&b) { return std::move(b.data); }));
 }
 
 void ValidatorManagerImpl::get_block_proof_from_db(ConstBlockHandle handle, td::Promise<td::Ref<Proof>> promise) {

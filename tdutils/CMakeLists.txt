@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-
 option(TDUTILS_MIME_TYPE "Generate mime types conversion (gperf is required)" ON)
 
 if (WIN32)
@@ -216,6 +214,7 @@ set(TDUTILS_SOURCE
   td/utils/invoke.h
   td/utils/JsonBuilder.h
   td/utils/List.h
+  td/utils/LRUCache.h
   td/utils/logging.h
   td/utils/MemoryLog.h
   td/utils/misc.h
@@ -320,6 +319,10 @@ set(TDUTILS_TEST_SOURCE
   PARENT_SCOPE
 )
 
+if (NOT TON_PRINT_BACKTRACE_ON_CRASH)
+  set_source_files_properties(td/utils/port/signals.cpp PROPERTIES COMPILE_DEFINITIONS TON_DISABLE_BACKTRACE)
+endif()
+
 #RULES
 #LIBRARIES
 add_library(tdutils STATIC ${TDUTILS_SOURCE})
@@ -356,6 +359,7 @@ if (LZ4_FOUND)
   message(STATUS "Found LZ4 ${LZ4_LIBRARIES} ${LZ4_INCLUDE_DIRS}")
   target_link_libraries(tdutils PRIVATE ${LZ4_LIBRARIES})
   target_include_directories(tdutils SYSTEM PRIVATE ${LZ4_INCLUDE_DIRS})
+  target_link_directories(tdutils PUBLIC ${LZ4_LIBRARY_DIRS})
 endif()
 
 if (ABSL_FOUND)
